@@ -1,6 +1,6 @@
 ---
-title: "D2 DoE project AS 2025"        # or whatever you like
-author: "..."                          # please fill in all of your names
+title: "D2 DoE project AS 2025"
+author: "Viviane Werlen, Yannik Ezekwu, Elia Salerno"                       
 format: 
   pdf:
     papersize: A4
@@ -115,7 +115,7 @@ Download speed (Mbps)
 [**... measured in this way:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-Using the speedtest.net online tool
+Using the speedtest.net online tool (taking the download speed result at the end of the test, which is based on a modified trimean built from 10th percentile, 50th percentile (median), and 90th percentile in a 1:8:1 ratio, source: <https://www.ookla.com/resources/guides/speedtest-methodology#performance-metrics>)
 :::
 
 [**Our remaining influence factors are:**]{style="color: green;"}
@@ -125,7 +125,7 @@ Using the speedtest.net online tool
 |              |                             |                             | random or fixed?            |
 +==============+=============================+=============================+=============================+
 | **Factor 1** | ::: {style="color: green;"} | ::: {style="color: green;"} | ::: {style="color: green;"} |
-|              | Decive                      | Phone, Laptop               | Fixed                       |
+|              | Device                      | Phone, Laptop               | Fixed                       |
 |              | :::                         | :::                         | :::                         |
 +--------------+-----------------------------+-----------------------------+-----------------------------+
 | **Factor 2** | ::: {style="color: green;"} | ::: {style="color: green;"} | ::: {style="color: green;"} |
@@ -162,13 +162,13 @@ Yes, to minimize the effect of temporary network fluctuations or time-dependent 
 Is there anything else to consider?
 
 ::: {style="color: green;"}
-Ensure no heavy background tasks (like App Updates, Backups) are running during the test, to avoid blocking factors.
+Ensure no heavy background tasks (like App Updates, Backups) are running during the test, to avoid blocking factors. Also as 'Home' as well as 'Uni' refers to different physical locations for each person, we treat 'Person' as a blocking factor in the analysis. This accounts for the different baseline internet speeds of our respective locations
 :::
 
 Is there anything which is not ideal in terms of experimentation, but where you did not find a better solution?
 
 ::: {style="color: green;"}
-In some cases we were unsure about the exact distance to the router and had to put our best guess, which is not ideal.
+Exact distance to the router was sometimes difficult to determine (especially at uni), so we used the best possible estimate.
 :::
 
 #### Step 4: Experiments!
@@ -200,8 +200,6 @@ Entering the data into R:
 
 ```{r data}
 df <- read.csv("d2_doe_data.csv")
-
-df <- na.omit(df) # remove of missing data, we can remove as soon as we have all
 
 df$person <- as.factor(df$person)
 df$device <- as.factor(df$device)
