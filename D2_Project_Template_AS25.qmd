@@ -137,7 +137,7 @@ Using the speedtest.net online tool (taking the download speed result at the end
 |              | :::                         | :::                         | :::                         |
 +--------------+-----------------------------+-----------------------------+-----------------------------+
 | **Factor 4** | Persons (of your group)     | ::: {style="color: green;"} | ::: {style="color: green;"} |
-|              |                             | Elia, Yannik, Viviane       | Fixed                       |
+|              |                             | Elia, Yannik, Viviane       | Random                      |
 |              |                             | :::                         | :::                         |
 +--------------+-----------------------------+-----------------------------+-----------------------------+
 | **Factor 5** | Daytime                     | ::: {style="color: green;"} | ::: {style="color: green;"} |
@@ -156,19 +156,19 @@ Each group member measures the download speed at two locations (Home, Uni). At e
 Do you need to randomize the order of your runs?
 
 ::: {style="color: green;"}
-Yes, to minimize the effect of temporary network fluctuations or time-dependent variables. The run order was randomized for each person.
+Yes. Run order was randomized for each person to minimize the effect of temporary network fluctuations
 :::
 
 Is there anything else to consider?
 
 ::: {style="color: green;"}
-Ensure no heavy background tasks (like App Updates, Backups) are running during the test, to avoid blocking factors. Also as 'Home' as well as 'Uni' refers to different physical locations for each person, we treat 'Person' as a blocking factor in the analysis. This accounts for the different baseline internet speeds of our respective locations
+'Person' is treated as a blocking factor (Random effect) to account for different baseline internet speeds at our respective homes.
 :::
 
 Is there anything which is not ideal in terms of experimentation, but where you did not find a better solution?
 
 ::: {style="color: green;"}
-Exact distance to the router was sometimes difficult to determine (especially at uni), so we used the best possible estimate.
+Exact distance to the router was an estimate (Line-of-Sight) due to physical constraints at the University.
 :::
 
 #### Step 4: Experiments!
@@ -186,7 +186,7 @@ Do not forget to [upload the data](https://mslscommunitycentre.ch/course/section
 Are there any remarks you'd like to add with respect to the experimentation step?
 
 ::: {style="color: green;"}
-Some measurements at the university varied highly due to network load.
+Some measurements at the university varied highly due to high variance in the network load.
 :::
 
 #### Step 5: Data analysis
@@ -199,73 +199,112 @@ Only by actually *doing* these tasks you'll see whether you have mastered this p
 Entering the data into R:
 
 ```{r data}
+library(lme4)
+library(effects)
+library(car)
+
 df <- read.csv("d2_doe_data.csv")
 
 df$person <- as.factor(df$person)
 df$device <- as.factor(df$device)
 df$location <- as.factor(df$location)
 df$approx_distance_router_meters <- as.factor(df$approx_distance_router_meters)
+df$time <- as.factor(df$time)
 
 head(df)
-nrow(df)
-
-library(mice)
-md.pattern(df)
 ```
 
 This plot shows our data:
 
 ```{r plot}
-par(mfrow=c(1,3))
-boxplot(download_speed_mbit_result ~ device, data = df, main = "Speed vs Device", ylab = "Speed (Mbps)")
-boxplot(download_speed_mbit_result ~ location, data = df, main = "Speed vs Location", ylab = "Speed (Mbps)")
-boxplot(download_speed_mbit_result ~ approx_distance_router_meters, data = df, main = "Speed vs Distance", ylab = "Speed (Mbps)")
+par(mfrow = c(2, 2))
+
+boxplot(download_speed_mbit_result ~ device, data = df,
+        main = "Download-Speed ~ Device",
+        xlab = "Device", ylab = "Speed (Mbit/s)", col="lightblue")
+
+boxplot(download_speed_mbit_result ~ location, data = df,
+        main = "Download-Speed ~ Location",
+        xlab = "Location", ylab = "Speed (Mbit/s)", col="lightgreen")
+
+boxplot(download_speed_mbit_result ~ approx_distance_router_meters, data = df,
+        main = "Download-Speed ~ Distance",
+        xlab = "Distance (m)", ylab = "Speed (Mbit/s)", col="lightcoral")
+
+par(mfrow = c(1, 1))
+
 ```
 
 Now we calculate the model:
 
 ```{r model}
-model <- lm(download_speed_mbit_result ~ person + device + location + approx_distance_router_meters, data = df)
-summary(model)
+model_initial <- lmer(
+  download_speed_mbit_result ~ device + location + approx_distance_router_meters +
+    (1 | person) + (1 | time),
+  data = df
+)
+
+
+model <- lmer(
+  download_speed_mbit_result ~ device + location + approx_distance_router_meters +
+    (1 | person),
+  data = df
+)
+
+Anova(model)
+
 ```
 
 These are the model diagnostics, i.e. how we have checked for the assumptions:
 
-```{r diagnostics}
-par(mfrow=c(2,2))
-plot(model)
-summary(model)
+```{summary(model)}
+
+res <- residuals(model)
+fitted_vals <- fitted(model)
+
+par(mfrow = c(1, 2))
+qqnorm(res, main = "Q-Q Plot")
+qqline(res, col = "red")
+
+plot(fitted_vals, res, 
+     main = "Residuals vs Fitted",
+     xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
+par(mfrow = c(1, 1))
 ```
 
 This is a plot which visualizes the model we have found:
 
-```{r resultplot}
-termplot(model, partial.resid = TRUE, se = TRUE, main = "Model Term Plots")
+```{plot(allEffects(model), main = "Main Effects Plot", grid=TRUE)}
 ```
 
 [**Our conclusions on the model reliability are:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-The model explains a large portion of the variance (Adjusted R-squared = 0.84), indicating a good fit. The Residuals vs Fitted plot shows no strong pattern, suggesting linearity. The Q-Q plot shows residuals are roughly normal, despite some deviation at the tails. There are no extreme outliers.
+The model diagnostics confirm that the assumptions for linear mixed models are adequately met. The Q-Q plot shows that residuals are approximately normally distributed, with points lying close to the theoretical line. The residuals vs. fitted values plot shows no systematic patterns or funnel shape, indicating homoscedasticity (constant variance). The random effect for Person accounts for individual differences in baseline internet speeds across homes. Note: The time factor was initially included but removed from the final model as it showed negligible variance and caused model instability, indicating no meaningful temporal blocking effect in our data. The final model shows a singular fit for the person random effect, suggesting that baseline speeds across our three homes were more similar than anticipated, but this does not affect the validity of our fixed effect conclusions.
 :::
 
 [**Altogether we have found out that:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-Distance to the router is the strongest influence factor: moving from 1m to 5m drops speed by \~339 Mbps, and to 10m by \~587 Mbps. Device is also significant, with phones being slower (\~161 Mbps less) than laptops. Location was weakly significant (p=0.04), while Person did not have a statistically significant impact on the speed in our model.
+Distance to the router is the strongest influence factor: moving from 1m to 5m drops speed by \~339 Mbps, and to 10m by \~587 Mbps. Device is also significant, with phones being slower (\~161 Mbps less) than laptops. Location was weakly significant (p=0.037), while Person did not have a statistically significant impact on the speed in our model.
 :::
 
 #### Step 6: Final Comments
 
 ```{r}
-model_int <- lm(download_speed_mbit_result ~ (person + device + location + approx_distance_router_meters)^2, data = df)
-anova(model, model_int)
+model_interaction <- lmer(
+  download_speed_mbit_result ~ device * approx_distance_router_meters + location +
+    (1 | person),
+  data = df
+)
+anova(model, model_interaction)
 ```
 
 [**This is what we can say about interactions in the data:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-The ANOVA test comparing the additive model to the model with interactions yields a p-value of \< 2.2e-16. This is highly significant, meaning that the factors do not act independently. The effect of one factor (e.g. distance) likely depends on the level of another factor (e.g. device or location), and the interaction model describes the data significantly better.
+The interaction model shows a statistically significant improvement over the main effects model (p = 0.003). This suggests that the effect of distance on download speed differs between phones and laptops. Specifically, the speed degradation with increasing distance appears more pronounced for one device type than the other. However, given the complexity this adds to interpretation and the relatively modest improvement in model fit, the main effects model remains our primary focus for practical conclusions. The interaction indicates that device-specific optimization strategies may be needed when operating at different distances from the router.
 :::
 
 Is there anything else you want to add, e.g.,
