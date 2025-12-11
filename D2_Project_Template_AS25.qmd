@@ -156,7 +156,7 @@ Each group member measures the download speed at two locations (Home, Uni). At e
 Do you need to randomize the order of your runs?
 
 ::: {style="color: green;"}
-Yes, to minimize the effect of temporary network fluctuations or time-dependent variables.
+Yes, to minimize the effect of temporary network fluctuations or time-dependent variables. The run order was randomized for each person.
 :::
 
 Is there anything else to consider?
@@ -173,7 +173,7 @@ Exact distance to the router was sometimes difficult to determine (especially at
 
 #### Step 4: Experiments!
 
-Do your experiments, and collect your data. Remember that it is obligatory to do **at least 3 replicates** per person and factor combination.
+Do your experiments, and collect your data. Remecmber that it is obligatory to do **at least 3 replicates** per person and factor combination.
 
 Do not forget to [upload the data](https://mslscommunitycentre.ch/course/section.php?id=3334) as .xslx or .csv on the moodle.
 
@@ -242,16 +242,21 @@ termplot(model, partial.resid = TRUE, se = TRUE, main = "Model Term Plots")
 [**Our conclusions on the model reliability are:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-\[short answer\]
+The model explains a large portion of the variance (Adjusted R-squared = 0.82), indicating a good fit. The Residuals vs Fitted plot shows no strong pattern, suggesting linearity. The Q-Q plot shows residuals are roughly normal, despite some deviation at the tails. There are no extreme outliers.
 :::
 
 [**Altogether we have found out that:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-\[short answer\]
+Distance to the router is the strongest influence factor: moving from 1m to 5m drops speed by \~339 Mbps, and to 10m by \~587 Mbps. Device is also significant, with phones being slower (\~161 Mbps less) than laptops. Location and Person did not have a statistically significant impact on the speed in our model.
 :::
 
 #### Step 6: Final Comments
+
+```{r}
+model_int <- lm(download_speed_mbit_result ~ (person + device + location + approx_distance_router_meters)^2, data = df)
+anova(model, model_int)
+```
 
 [**This is what we can say about interactions in the data:**]{style="color: green;"}
 
@@ -268,7 +273,7 @@ Is there anything else you want to add, e.g.,
 -   ...
 
 ::: {style="color: green;"}
-\[add, if applicable\]
+Next time, we would measure the distances to the router more precisely (e.g. using a tape measure) rather than estimating. We were surprised that the speed drop-off at 10m was so drastic (over 70% loss) compared to 1m.
 :::
 
 #### Step 7: Report
