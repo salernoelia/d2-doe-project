@@ -137,7 +137,7 @@ Using the speedtest.net online tool (taking the download speed result at the end
 |              | :::                         | :::                         | :::                         |
 +--------------+-----------------------------+-----------------------------+-----------------------------+
 | **Factor 4** | Persons (of your group)     | ::: {style="color: green;"} | ::: {style="color: green;"} |
-|              |                             | Elia, Yannik, Viviane       | Random                      |
+|              |                             | Elia, Yannik, Viviane       | Fixed                       |
 |              |                             | :::                         | :::                         |
 +--------------+-----------------------------+-----------------------------+-----------------------------+
 | **Factor 5** | Daytime                     | ::: {style="color: green;"} | ::: {style="color: green;"} |
@@ -207,6 +207,10 @@ df$location <- as.factor(df$location)
 df$approx_distance_router_meters <- as.factor(df$approx_distance_router_meters)
 
 head(df)
+nrow(df)
+
+library(mice)
+md.pattern(df)
 ```
 
 This plot shows our data:
@@ -242,13 +246,13 @@ termplot(model, partial.resid = TRUE, se = TRUE, main = "Model Term Plots")
 [**Our conclusions on the model reliability are:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-The model explains a large portion of the variance (Adjusted R-squared = 0.82), indicating a good fit. The Residuals vs Fitted plot shows no strong pattern, suggesting linearity. The Q-Q plot shows residuals are roughly normal, despite some deviation at the tails. There are no extreme outliers.
+The model explains a large portion of the variance (Adjusted R-squared = 0.84), indicating a good fit. The Residuals vs Fitted plot shows no strong pattern, suggesting linearity. The Q-Q plot shows residuals are roughly normal, despite some deviation at the tails. There are no extreme outliers.
 :::
 
 [**Altogether we have found out that:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-Distance to the router is the strongest influence factor: moving from 1m to 5m drops speed by \~339 Mbps, and to 10m by \~587 Mbps. Device is also significant, with phones being slower (\~161 Mbps less) than laptops. Location and Person did not have a statistically significant impact on the speed in our model.
+Distance to the router is the strongest influence factor: moving from 1m to 5m drops speed by \~339 Mbps, and to 10m by \~587 Mbps. Device is also significant, with phones being slower (\~161 Mbps less) than laptops. Location was weakly significant (p=0.04), while Person did not have a statistically significant impact on the speed in our model.
 :::
 
 #### Step 6: Final Comments
@@ -261,7 +265,7 @@ anova(model, model_int)
 [**This is what we can say about interactions in the data:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-\[short answer\]
+The ANOVA test comparing the additive model to the model with interactions yields a p-value of \< 2.2e-16. This is highly significant, meaning that the factors do not act independently. The effect of one factor (e.g. distance) likely depends on the level of another factor (e.g. device or location), and the interaction model describes the data significantly better.
 :::
 
 Is there anything else you want to add, e.g.,
