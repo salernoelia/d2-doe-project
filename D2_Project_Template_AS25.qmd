@@ -196,9 +196,7 @@ Only by actually *doing* these tasks you'll see whether you have mastered this p
 
 [**Here is the R code used for the analysis:**]{style="color: green;"}
 
-Entering the data into R:
-
-```{r data}
+```{r}
 library(lme4)
 library(effects)
 library(car)
@@ -216,7 +214,7 @@ head(df)
 
 This plot shows our data:
 
-```{r plot}
+```{r}
 par(mfrow = c(2, 2))
 
 boxplot(download_speed_mbit_result ~ device, data = df,
@@ -237,7 +235,7 @@ par(mfrow = c(1, 1))
 
 Now we calculate the model:
 
-```{r model}
+```{r}
 model_initial <- lmer(
   download_speed_mbit_result ~ device + location + approx_distance_router_meters +
     (1 | person) + (1 | time),
@@ -257,25 +255,29 @@ Anova(model)
 
 These are the model diagnostics, i.e. how we have checked for the assumptions:
 
-```{summary(model)}
-
-res <- residuals(model)
+```{r}
+summary(model)
+res <- residuals(model) 
 fitted_vals <- fitted(model)
 
-par(mfrow = c(1, 2))
-qqnorm(res, main = "Q-Q Plot")
+par(mfrow = c(1, 2)) 
+qqnorm(res, main = "Q-Q Plot") 
 qqline(res, col = "red")
 
-plot(fitted_vals, res, 
-     main = "Residuals vs Fitted",
-     xlab = "Fitted Values", ylab = "Residuals")
-abline(h = 0, col = "red")
-par(mfrow = c(1, 1))
+plot(fitted_vals, res, main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals") 
+abline(h = 0, col = "red") 
 ```
 
-This is a plot which visualizes the model we have found:
+```         
 
-```{plot(allEffects(model), main = "Main Effects Plot", grid=TRUE)}
+This is a plot which visualizes the model we have found:
+```
+
+```{r}
+plot(allEffects(model),
+     main = "Main Effects Plot",
+     grid = FALSE,
+     layout = c(1, 1))
 ```
 
 [**Our conclusions on the model reliability are:**]{style="color: green;"}
