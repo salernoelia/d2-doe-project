@@ -168,7 +168,7 @@ Is there anything else to consider?
 Is there anything which is not ideal in terms of experimentation, but where you did not find a better solution?
 
 ::: {style="color: green;"}
-Exact distance to the router was an estimate (Line-of-Sight) due to physical constraints at the University.
+Exact distance to the router was an estimate (Line-of-Sight) due to physical constraints at the University. Walls and ceilings could pose additional various obstacles.
 :::
 
 #### Step 4: Experiments!
@@ -196,7 +196,10 @@ Only by actually *doing* these tasks you'll see whether you have mastered this p
 
 [**Here is the R code used for the analysis:**]{style="color: green;"}
 
-```{r}
+Entering the data into R:
+
+::: {style="color: green;"}
+```{r data}
 library(lme4)
 library(effects)
 library(car)
@@ -211,12 +214,12 @@ df$time <- as.factor(df$time)
 
 head(df)
 ```
+:::
 
-This plot shows our data:
+**This plot shows our data:**
 
-```{r}
-par(mfrow = c(2, 2))
-
+::: {style="color: green;"}
+```{r plot}
 boxplot(download_speed_mbit_result ~ device, data = df,
         main = "Download-Speed ~ Device",
         xlab = "Device", ylab = "Speed (Mbit/s)", col="lightblue")
@@ -229,12 +232,12 @@ boxplot(download_speed_mbit_result ~ approx_distance_router_meters, data = df,
         main = "Download-Speed ~ Distance",
         xlab = "Distance (m)", ylab = "Speed (Mbit/s)", col="lightcoral")
 
-par(mfrow = c(1, 1))
-
 ```
+:::
 
-Now we calculate the model:
+**Now we calculate the model and check for significance factors by Anova:**
 
+::: {style="color: green;"}
 ```{r}
 model_initial <- lmer(
   download_speed_mbit_result ~ device + location + approx_distance_router_meters +
@@ -242,43 +245,58 @@ model_initial <- lmer(
   data = df
 )
 
+summary(model_initial)
 
+Anova(model_initial)
+```
+
+The inclusion of the time factor is not statistically meaningful, as almost every measurement point occurs only once and there is therefore no real replication. This makes time in the model an overpowering random effect that absorbs almost all of the variation and leads to an artificially low residual variance. This complicates the interpretation of the main effects and leads to an unstable variance estimate. A model without time is therefore better.
+
+```{r}
 model <- lmer(
   download_speed_mbit_result ~ device + location + approx_distance_router_meters +
     (1 | person),
   data = df
 )
 
-Anova(model)
-
-```
-
-These are the model diagnostics, i.e. how we have checked for the assumptions:
-
-```{r}
 summary(model)
-res <- residuals(model) 
+
+Anova(model)
+```
+:::
+
+**These are the model diagnostics**, i.e. how we have checked for the assumptions:
+
+::: {style="color: green;"}
+```{r}
+res <- residuals(model)
 fitted_vals <- fitted(model)
 
-par(mfrow = c(1, 2)) 
-qqnorm(res, main = "Q-Q Plot") 
+par(mfrow = c(1, 2))
+
+qqnorm(res, main = "Q-Q Plot")
 qqline(res, col = "red")
 
-plot(fitted_vals, res, main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals") 
-abline(h = 0, col = "red") 
-```
+plot(fitted_vals, res,
+     main = "Residuals vs Fitted",
+     xlab = "Fitted Values",
+     ylab = "Residuals")
+abline(h = 0, col = "red")
 
-```         
+par(mfrow = c(1, 1))
 
-This is a plot which visualizes the model we have found:
+shapiro.test(res)
 ```
+:::
 
-```{r}
-plot(allEffects(model),
-     main = "Main Effects Plot",
-     grid = FALSE,
-     layout = c(1, 1))
+**This is a plot which visualizes the model we have found:**
+
+::: {style="color: green;"}
+```{r fig.width=10, fig.height=6, dpi=150}
+plot(allEffects(model), main = "Main Effects Plot", grid = TRUE)
+
 ```
+:::
 
 [**Our conclusions on the model reliability are:**]{style="color: green;"}
 
@@ -294,6 +312,7 @@ Distance to the router is the strongest influence factor: moving from 1m to 5m d
 
 #### Step 6: Final Comments
 
+::: {style="color: green;"}
 ```{r}
 model_interaction <- lmer(
   download_speed_mbit_result ~ device * approx_distance_router_meters + location +
@@ -302,11 +321,12 @@ model_interaction <- lmer(
 )
 anova(model, model_interaction)
 ```
+:::
 
 [**This is what we can say about interactions in the data:**]{style="color: green;"}
 
 ::: {style="color: green;"}
-The interaction model shows a statistically significant improvement over the main effects model (p = 0.003). This suggests that the effect of distance on download speed differs between phones and laptops. Specifically, the speed degradation with increasing distance appears more pronounced for one device type than the other. However, given the complexity this adds to interpretation and the relatively modest improvement in model fit, the main effects model remains our primary focus for practical conclusions. The interaction indicates that device-specific optimization strategies may be needed when operating at different distances from the router.
+The interaction model shows a statistically significant improvement over the main effects model (p = 0.003). This suggests that the effect of distance on download speed differs between phones and laptops. Specifically, the speed degradation with increasing distance appears more pronounced for one device type than the other. However, given the complexity this adds to interpretation and the relatively modest improvement in model fit, the main effects model remains our primary focus for practical conclusions.
 :::
 
 Is there anything else you want to add, e.g.,
